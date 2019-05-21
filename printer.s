@@ -17,8 +17,8 @@ section .text
 
 section .rodata
     f_string: db "%s", 10, 0	; format string
-    f_float_target: db "%g,%g",10 , 0	; format string to the target
-    f_float_drone: db "%d,%f,%f,%f,%f",10 , 0	; format string to the target
+    f_float_target: db "%.2f,%.2f",10 , 0	; format string to the target
+    f_float_drone: db "%d,%.2f,%.2f,%.2f,%.2f",10 , 0	; format string to the target
 
 section .data
     iter_drone : dd 0
@@ -36,11 +36,17 @@ printer:
         pushad                   	; push all signficant registers onto stack (backup registers values)
 ;       mov ecx, dword [ebp+8]		; get function argument on stack
 ;       pushad
-        push [target_x]
-        push [target_y]
+        sub esp , 8
+        mov ebx , target_x
+        fld dword [ebx]
+        fstp qword [esp]
+        sub esp , 8
+        mov ebx , target_y
+        fld dword [ebx]
+        fstp qword [esp]
         push f_float_target
         call printf
-        add esp, 164 ;to check how much to add because of target_x&target_y
+        add esp, 20 ;to check how much to add because of target_x&target_y
         popad
     loop_printer:
         mov edx , [iter_drone]
@@ -49,26 +55,26 @@ printer:
         mov eax , STKSIZE
         mul edx
         add eax , dword [stacks]
+        pushad
+        push dword [iter_drone]
         fld dword [eax]
-        fstp dword [print_x]
-        add eax , 80
+        sub esp, 8
+        fstp qword [esp] ; pushing x tp esp
+        add eax , 4
+        fld dword [eax] 
+        sub esp , 8
+        fstp qword [esp] ; pushing y to esp
+        add eax , 4
         fld dword [eax]
-        fstp dword [print_y]
-        add eax , 80
-        fld dword [eax]
-        fstp dword [print_angle]
+        sub esp , 8
+        fstp qword [esp] ; pushing angle to esp
         add eax , 4
         mov ebx , dword [eax]
         mov [print_kills], ebx
-        pushad
-        push dword [iter_drone]
-        push dword [print_x]
-        push dword [print_y]
-        push dword [print_angle]
         push dword [print_kills]
         push f_float_drone
         call printf
-        add esp , 252  ;check how much to add
+        add esp , 32  ;check how much to add
         popad
         inc dword [iter_drone]
         jmp loop_printer

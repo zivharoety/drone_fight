@@ -15,12 +15,15 @@ global    rand_in_range
 global    rand_angle
 global    rand_distance
 global    rand_distance_var
+global    to_print
+global    rand_target
+extern    function
 
 
 section .rodata
     f_string: db "%s", 10, 0	    ; format string
     f_int: db "%d",10 , 0	        ; format string
-    f_float_target: db "%f",10 , 0	; format float
+    f_float_target: db "%.2f",10 , 0	; format float
 
     err_arguments: db 'Error: Not enough arguments', 0
     STKSIZE equ 16*1024             ;16 Kb
@@ -30,7 +33,12 @@ section .rodata
     x_off equ 4
     y_off equ 8
     target_off equ 12
-    
+    max_short: dd 65535
+    one_twenty: dd  120
+    minus_sixty: dd 60
+    hundred: dd 100
+    fifty: dd 50
+    temp: dd 4.0
 
 
 section .bss			; we define (global) uninitialized variables in .bss section
@@ -55,10 +63,8 @@ section .data
     game_over: dd 0
     rand_angle: dd 0.0
     rand_distance_var: dd 0.0
-    max_short: dd 65535
-    one_twenty: dd  120
-    minus_sixty: dd 60
-    temp: dd 4
+    to_print: dd 0.0
+   
 
     ;scheduler:  dd schedule                    ;;;;;to recheck!
                 dd STK_schduler+STKSIZE
@@ -198,18 +204,46 @@ end_loop_set:
 ;    inc eax
 ;    jmp loop_init
 ;end_loop_init:
+ziv_debug:
+    call function
+    ;inc dword [curr_drone]
+    jmp ziv_debug
+
+call rand_in_range
+guy_debug:
+    mov edx , dword [rand_angle]
+    mov dword [to_print] , edx
+    call print_top
+    jmp end
+   
+
+
+
+
+print_top:
+    pushad
+    sub esp, 8
+    mov ebx , to_print
+    fld dword [ebx]
+    fstp qword [esp]
+    push f_float_target
+    call printf
+    add esp , 12
+    popad
+    ret 
 
 
 
 rand_in_range:
     call rand_float
     finit
-    fld dword [seed]
-    fld dword [max_short]
+    fild dword [seed]
+  ;  mov ecx , dword [max_short]
+    fild dword [max_short]
     fdivp
-    fld dword [one_twenty]
+    fild dword [one_twenty]
     fmulp
-    fld dword [minus_sixty]
+    fild dword [minus_sixty]
     fsubp
     fstp dword [rand_angle]
     ret
@@ -218,9 +252,9 @@ rand_distance:
     call rand_float
     finit
     fld dword [seed]
-    fld dword [max_short]
+    fild dword [max_short]
     fdivp
-    fld dword [fifty]
+    fild dword [fifty]
     fmulp
     fstp dword [rand_distance_var]
     ret
@@ -272,8 +306,24 @@ rand_float:
         ret     ;to check again how to return from a function
     
 
-
-    
+rand_target:
+    call rand_float
+    finit
+    fild dword [seed]
+    fild dword [max_short]
+    fdivp
+    fild dword [hundred]
+    fmulp
+    fstp dword [target_x]
+    call rand_float
+    finit
+    fild dword [seed]
+    fild dword [max_short]
+    fdivp
+    fild dword [hundred]
+    fmulp
+    fstp dword [target_y]
+    ret
 
 
 error1:
@@ -283,8 +333,9 @@ error1:
     call printf
     add esp , 8
     popad
-    mov eax , 0
-    mov ebx , 1
+end:
+    mov eax , 1
+    mov ebx , 0
     int 0x80
       
         
