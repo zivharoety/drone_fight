@@ -15,6 +15,9 @@ global    rand_in_range
 global    rand_angle
 global    rand_distance
 global    rand_distance_var
+global    rand_target
+extern    resume
+
 
 
 section .rodata
@@ -57,15 +60,13 @@ section .data
     rand_distance_var: dd 0.0
     max_short: dd 65535
     one_twenty: dd  120
+    hundred: dd 100
     minus_sixty: dd 60
     temp: dd 4
+    fifty: dd 50
+    x: dd 10.00
+    y: dd 20.00
 
-    ;scheduler:  dd schedule                    ;;;;;to recheck!
-                dd STK_schduler+STKSIZE
-    ;printer:    dd print
-                dd STK_printer+STKSIZE
-    ;target:     dd creat_target
-                dd STK_target+STKSIZE
 
 
 section .text
@@ -200,6 +201,8 @@ end_loop_set:
 ;end_loop_init:
 
 
+    ;call resume
+
 
 rand_in_range:
     call rand_float
@@ -224,6 +227,28 @@ rand_distance:
     fmulp
     fstp dword [rand_distance_var]
     ret
+
+rand_target:
+    call rand_float
+    finit
+    fild dword [seed]
+    fild dword [max_short]
+    fdivp
+    fild dword [hundred]
+    fmulp
+    fstp dword [target_x]
+    call rand_float
+    finit
+    fild dword [seed]
+    fild dword [max_short]
+    fdivp
+    fild dword [hundred]
+    fmulp
+    fstp dword [target_y]
+    ret
+    
+
+
     
 
 rand_float:
