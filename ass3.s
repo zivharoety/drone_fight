@@ -39,6 +39,8 @@ section .rodata
     hundred: dd 100
     fifty: dd 50
     temp: dd 4.0
+    three_sisxty: dd 360
+    
 
 
 section .bss			; we define (global) uninitialized variables in .bss section
@@ -64,6 +66,9 @@ section .data
     rand_angle: dd 0.0
     rand_distance_var: dd 0.0
     to_print: dd 0.0
+    new_drone_x: dd 0.0
+    new_drone_y: dd 0.0
+    new_drone_angle: dd 0.0
    
 
     ;scheduler:  dd schedule                    ;;;;;to recheck!
@@ -168,6 +173,7 @@ main:
     push eax
     call calloc
     add esp, 4
+callc_debug:
     mov [stacks], eax        
     popad
 
@@ -183,7 +189,7 @@ main:
 
     mov eax , 0
     mov ebx , 4
-    mov ecx , STKSIZE
+    mov ecx , 0
 
 loop_set_drones_stacks:
     cmp eax, [num_of_drones]
@@ -196,6 +202,30 @@ loop_set_drones_stacks:
     jmp loop_set_drones_stacks
 end_loop_set:
 
+mov eax ,0
+mov ecx , stacks
+mov ebx , 0
+mov edx, 0
+loop_random_loc_drone:
+    cmp eax , [num_of_drones]
+    je end_loop_rand_loc
+    pushad
+    call rand_loc_drone
+    popad
+    mov edx, ecx
+    mov ebx , dword [new_drone_angle]
+    mov dword [edx] , ebx
+    add edx , 4
+    mov ebx , dword [new_drone_x]
+    mov dword [edx] , ebx
+    add edx , 4
+    mov ebx , dword [new_drone_y]
+    mov dword [edx] , ebx
+    add ecx , STKSIZE
+    inc eax
+    jmp loop_random_loc_drone
+    
+end_loop_rand_loc:
 ;mov eax , 0            
 ;loop_init:
 ;    cmp eax , [num_of_drones]
@@ -204,8 +234,14 @@ end_loop_set:
 ;    inc eax
 ;    jmp loop_init
 ;end_loop_init:
+mov dword [curr_drone] , 0
+pushad
+call rand_target
+popad
 ziv_debug:
+    pushad
     call function
+    popad
     ;inc dword [curr_drone]
     jmp ziv_debug
 
@@ -213,7 +249,9 @@ call rand_in_range
 guy_debug:
     mov edx , dword [rand_angle]
     mov dword [to_print] , edx
+    pushad
     call print_top
+    popad
     jmp end
    
 
@@ -235,7 +273,11 @@ print_top:
 
 
 rand_in_range:
+    push ebp
+    mov ebp, esp
+    pushad
     call rand_float
+    popad
     finit
     fild dword [seed]
   ;  mov ecx , dword [max_short]
@@ -246,10 +288,16 @@ rand_in_range:
     fild dword [minus_sixty]
     fsubp
     fstp dword [rand_angle]
+    mov esp , ebp
+    pop ebp
     ret
 
 rand_distance:
+    push ebp
+    mov ebp, esp
+    pushad
     call rand_float
+    popad
     finit
     fld dword [seed]
     fild dword [max_short]
@@ -257,10 +305,14 @@ rand_distance:
     fild dword [fifty]
     fmulp
     fstp dword [rand_distance_var]
+    mov esp , ebp
+    pop ebp
     ret
     
 
 rand_float:
+    push ebp
+    mov ebp, esp
     mov eax , 0
     mov ecx , 0
     mov eax , [seed]
@@ -303,11 +355,17 @@ rand_float:
         add eax , 32768
     .modify_seed:
         mov dword [seed], eax
+        mov esp , ebp
+        pop ebp
         ret     ;to check again how to return from a function
     
 
 rand_target:
+    push ebp
+    mov ebp, esp
+    pushad
     call rand_float
+    popad
     finit
     fild dword [seed]
     fild dword [max_short]
@@ -315,7 +373,9 @@ rand_target:
     fild dword [hundred]
     fmulp
     fstp dword [target_x]
+    pushad
     call rand_float
+    popad
     finit
     fild dword [seed]
     fild dword [max_short]
@@ -323,9 +383,49 @@ rand_target:
     fild dword [hundred]
     fmulp
     fstp dword [target_y]
+    mov esp , ebp
+    pop ebp
     ret
 
-
+rand_loc_drone:
+    push ebp
+    mov ebp, esp
+    mov dword [new_drone_x] , 0
+    mov dword [new_drone_y] , 0
+    mov dword [new_drone_angle], 0
+    pushad
+    call rand_float
+    popad
+    finit
+    fild dword [seed]
+    fild dword [max_short]
+    fdivp
+    fild dword [hundred]
+    fmulp
+    fstp dword [new_drone_x]
+    pushad
+    call rand_float
+    popad
+    finit
+    fild dword [seed]
+    fild dword [max_short]
+    fdivp
+    fild dword [hundred]
+    fmulp
+    fstp dword [new_drone_y]
+    pushad
+    call rand_float
+    popad
+    finit
+    fild dword [seed]
+    fild dword [max_short]
+    fdivp
+    fild dword [three_sisxty]
+    fmulp
+    fstp dword [new_drone_angle]
+    mov esp , ebp
+    pop ebp
+    ret
 error1:
     pushad
     push err_arguments
