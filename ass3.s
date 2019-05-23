@@ -28,7 +28,7 @@ section .rodata
     f_float_target: db "%.2f",10 , 0	; format float
 
     err_arguments: db 'Error: Not enough arguments', 0
-    STKSIZE: dd 16384             ;16 Kb
+    STKSIZE: dd 1024;16384             ;16 Kb
     CODEP equ 0                     ; offset of pointer to co-routine function in co-routine struct
     SPP equ 4                       ; offset of pointer to co-routine stack in co-routine struct 
     alpha_off equ 0
@@ -166,8 +166,10 @@ main:
     call sscanf
     add esp, 12
     popad
+    
+    ;;; to checkkk
 
-
+ziv:
     mov eax , [num_of_drones]       ;allocating an array for the satcks of the drones 
     mov ebx, dword [STKSIZE]
     mul ebx
@@ -193,16 +195,27 @@ callc_debug:
     mov ebx , 4
     mov ecx , 0
 
-loop_set_drones_stacks:
-    cmp eax, [num_of_drones]
-    je end_loop_set
-    mov edx ,dword [stacks+ecx] 
-    mov dword [CORS+ebx] , edx
-    add ebx , 8
-    add ecx , dword [STKSIZE]
-    inc eax
-    jmp loop_set_drones_stacks
-end_loop_set:
+    pushad
+    push dword [num_of_drones]
+    push f_int
+    call printf
+    add esp , 8
+    popad
+
+;; this is the problem !!!
+
+;loop_set_drones_stacks:
+;    cmp eax, [num_of_drones]
+;    je end_loop_set
+;    mov edx ,dword [stacks+ecx] 
+;    mov dword [CORS+ebx] , edx
+;    add ebx , 8
+;    add ecx , dword [STKSIZE]
+;    inc eax
+;    jmp loop_set_drones_stacks
+;end_loop_set:
+
+
 
 mov eax ,0
 ;mov ecx , stacks
@@ -232,6 +245,7 @@ loop_random_loc_drone:
     jmp loop_random_loc_drone
     
 end_loop_rand_loc:
+
 ;mov eax , 0            
 ;loop_init:
 ;    cmp eax , [num_of_drones]
