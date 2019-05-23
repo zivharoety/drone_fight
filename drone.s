@@ -54,9 +54,10 @@ section .text
         mov ebx,  STKSIZE
         imul ebx
         mov ebx , 0
-        mov ebx , stacks
+        mov ebx , [stacks]
     ;    mov ebx , dword [ebx]
-        add ebx, eax                
+        ;add ebx, eax                
+        add ebx , STKSIZE
         mov eax, dword [ebx]        
         mov dword [curr_angle], eax         ;getting the curr angle
         add ebx, 4
@@ -90,10 +91,6 @@ section .text
 	    fld	dword [one_eighty]  
 	    fdivp	                            ; and divide by 180.0
         fcos
-        fld dword [one_eighty]              ;convering back to celsuis
-        fmulp                               ; mul by 180.0
-        fldpi   
-        fdivp                               ; and divide by pi
         fld dword [rand_distance_var]
         fmulp
         fld dword [curr_x]
@@ -108,16 +105,17 @@ section .text
         fsubp
         fstp dword [curr_x]
     .next2:
+        finit
         fld dword [curr_angle]
         fldpi                                 ; Convert heading into radians
 	    fmulp                                 ; multiply by pi
 	    fld	dword [one_eighty]
 	    fdivp                       	      ; and divide by 180.0
         fsin
-        fld dword [one_eighty]                ; converting back to celsuis
-        fmulp
-        fldpi
-        fdivp
+       ; fld dword [one_eighty]                ; converting back to celsuis
+       ; fmulp
+       ; fldpi
+       ; fdivp
         fld dword [rand_distance_var]
         fmulp
         fld dword [curr_y]
@@ -158,19 +156,19 @@ section .text
 	    fld	dword [one_eighty]
 	    fdivp	                                     ; and divide by 180.0
         fpatan
-        fld dword [one_eighty]
-        fmulp
-        fldpi
-        fdivp
+       ; fld dword [one_eighty]
+       ; fmulp
+       ; fldpi
+       ; fdivp
         fstp dword [gamma]                           ;calculating arctan2(y2-y1,x2-x1)
         fld dword [curr_angle]
         fld dword [gamma]
         fsubp
         fabs
-        fld dword [beta]
+        fild dword [beta]
         fcomi                       
-        jl function.cant_destroy
-        ffree
+        jg function.cant_destroy
+     ;   ffree
         finit
         fld dword [new_x]
         fld dword [new_x]
@@ -193,21 +191,20 @@ section .text
         ;backing up the data to the stack
         mov eax , [curr_drone]              ;getting the curr drone stack
         mov ebx,  STKSIZE
-        imul ebx
+        imul ebx             
         mov ebx , [stacks]
         add ebx, eax                
-        mov eax, dword [ebx]        
-        mov  eax , dword [curr_angle]         ;backing up the curr angle
+        mov  eax , dword [curr_angle]
+        mov dword [ebx] , eax
         add ebx, 4
-        mov eax , dword [ebx]
         mov eax , dword [curr_x]             ;backing up the curr x
+        mov dword [ebx] , eax
         add ebx, 4
-        mov eax , dword [ebx]
         mov eax , dword [curr_y]             ;backing up the curr y
+        mov dword [ebx] , eax
         add ebx, 4
-        mov eax , dword [ebx]
         mov eax ,  dword [targets_dest]       ;backing up the curr targets_dest
-
+        mov dword [ebx] , eax
         pushad
         call create_target     ;TODO: need to implement the target co-routine 
         popad
@@ -217,20 +214,22 @@ section .text
         ;backing up the data to the stack
         mov eax , [curr_drone]              ;getting the curr drone stack
         mov ebx,  STKSIZE
-        imul ebx
+        imul ebx             
         mov ebx , [stacks]
         add ebx, eax                
-        mov eax, dword [ebx]        
-        mov  eax , dword [curr_angle]         ;backing up the curr angle
+        mov  eax , dword [curr_angle]
+        mov dword [ebx] , eax
         add ebx, 4
-        mov eax , dword [ebx]
         mov eax , dword [curr_x]             ;backing up the curr x
+        mov dword [ebx] , eax
         add ebx, 4
-        mov eax , dword [ebx]
         mov eax , dword [curr_y]             ;backing up the curr y
+        mov dword [ebx] , eax
         add ebx, 4
-        mov eax , dword [ebx]
         mov eax ,  dword [targets_dest]       ;backing up the curr targets_dest
+        mov dword [ebx] , eax
+        mov esp , ebp
+        pop ebp
         ret
        
 

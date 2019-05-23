@@ -18,6 +18,7 @@ global    rand_distance_var
 global    to_print
 global    rand_target
 extern    function
+extern    printer
 
 
 section .rodata
@@ -203,16 +204,16 @@ loop_set_drones_stacks:
 end_loop_set:
 
 mov eax ,0
-mov ecx , stacks
+;mov ecx , stacks
 mov ebx , 0
-mov edx, 0
+mov edx, [stacks]
 loop_random_loc_drone:
     cmp eax , [num_of_drones]
     je end_loop_rand_loc
     pushad
     call rand_loc_drone
     popad
-    mov edx, ecx
+    mov ecx, edx
     mov ebx , dword [new_drone_angle]
     mov dword [edx] , ebx
     add edx , 4
@@ -221,8 +222,10 @@ loop_random_loc_drone:
     add edx , 4
     mov ebx , dword [new_drone_y]
     mov dword [edx] , ebx
-    add ecx , STKSIZE
+    sub edx , 8
+    add edx , STKSIZE
     inc eax
+     mov ecx, edx
     jmp loop_random_loc_drone
     
 end_loop_rand_loc:
@@ -242,7 +245,13 @@ ziv_debug:
     pushad
     call function
     popad
-    ;inc dword [curr_drone]
+    inc dword [curr_drone]
+    pushad
+    call function
+    popad
+    pushad
+    call printer
+    popad
     jmp ziv_debug
 
 call rand_in_range
@@ -299,7 +308,7 @@ rand_distance:
     call rand_float
     popad
     finit
-    fld dword [seed]
+    fild dword [seed]
     fild dword [max_short]
     fdivp
     fild dword [fifty]

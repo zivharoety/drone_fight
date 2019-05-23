@@ -12,19 +12,16 @@ section .text
     extern    target_x
     extern    target_y
     extern    STKSIZE
-    global printer
+    global    printer
 
 
 section .rodata
     f_string: db "%s", 10, 0	; format string
     f_float_target: db "%.2f,%.2f",10 , 0	; format string to the target
-    f_float_drone: db "%d,%.2f,%.2f,%.2f,%.2f",10 , 0	; format string to the target
+    f_float_drone: db "%d,%.2f,%.2f,%.2f,%d",10 , 0	; format string to the target
 
 section .data
     iter_drone : dd 0
-    print_x : dd 0.0
-    print_y : dd 0.0
-    print_angle : dd 0.0
     print_kills : dd 0
     offset: dd 0
 
@@ -48,33 +45,38 @@ printer:
         call printf
         add esp, 20 ;to check how much to add because of target_x&target_y
         popad
+        mov dword [iter_drone] , 0
     loop_printer:
-        mov edx , [iter_drone]
+        mov edx , dword [iter_drone]
         cmp dword [num_of_drones], edx
         je finish_print
-        mov eax , STKSIZE
+
+        ; /////// new print
+        mov eax, STKSIZE
+        mov edx ,dword [iter_drone]
         mul edx
-        add eax , dword [stacks]
-        pushad
-        push dword [iter_drone]
-        fld dword [eax]
-        sub esp, 8
-        fstp qword [esp] ; pushing x tp esp
-        add eax , 4
-        fld dword [eax] 
-        sub esp , 8
-        fstp qword [esp] ; pushing y to esp
-        add eax , 4
-        fld dword [eax]
-        sub esp , 8
-        fstp qword [esp] ; pushing angle to esp
-        add eax , 4
+        add eax, dword [stacks]
+        add eax , 12
         mov ebx , dword [eax]
-        mov [print_kills], ebx
+        mov dword [print_kills], ebx
         push dword [print_kills]
+        finit
+        sub eax ,12 ; to alpha
+        fld dword [eax]
+        sub esp , 8
+        fstp qword [esp]
+        add eax , 8 ; to y
+        fld dword [eax]
+        sub esp , 8
+        fstp qword [esp]
+        sub eax , 4
+        fld dword [eax]
+        sub esp , 8
+        fstp qword [esp]
+        push dword [iter_drone]
         push f_float_drone
         call printf
-        add esp , 32  ;check how much to add
+        add esp , 36  ;check how much to add
         popad
         inc dword [iter_drone]
         jmp loop_printer
