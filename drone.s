@@ -42,6 +42,8 @@ section .rodata
         three_sisxty: dd 360
         hundred: dd 100
         one_eighty: dd 180.0
+        zero: dd 0
+        
 
 
 
@@ -51,14 +53,13 @@ section .text
         push ebp
         mov ebp , esp
         mov eax , dword [curr_drone]              ;getting the curr drone stack
-        mov ebx,  STKSIZE
+        mov ebx,  dword [STKSIZE]
         imul ebx
         mov ebx , 0
         mov ebx , [stacks]
-    ;    mov ebx , dword [ebx]
-        ;add ebx, eax                
-        add ebx , STKSIZE
-        mov eax, dword [ebx]        
+        add ebx, eax                
+    ;    add ebx , STKSIZE           ;to delete!!!
+     ;   mov eax, dword [ebx]        
         mov dword [curr_angle], eax         ;getting the curr angle
         add ebx, 4
         mov eax , dword [ebx]
@@ -76,14 +77,27 @@ section .text
         finit
         fld dword [rand_angle]
         fld dword [curr_angle]
-        faddp     
-        fild dword [three_sisxty]
-        fcomip
-        jg function.next
-        fstp dword [junk]
+        faddp 
+        fstp dword [curr_angle]    
+       ; fild dword [three_sisxty]
+       ; fcomip
+       ; jg function.angle_zero
+        finit  
+        fld dword [rand_angle]
         fld dword [curr_angle]
-        fild dword [three_sisxty]
-        fsubp
+        faddp 
+       ; fild dword [three_sisxty]
+       ; fsubp
+    .angle_zero:
+       ; fild dword [zero]
+       ; fcomip
+       ; jl function.next
+       ; finit
+       ; fld dword [rand_angle]
+       ; fld dword [curr_angle]
+       ; faddp 
+        ;fild dword [three_sisxty]
+        ;faddp
     .next:
         fst dword [curr_angle]
         fldpi                               ; Convert curr_angle into radians
@@ -96,14 +110,14 @@ section .text
         fld dword [curr_x]
         faddp 
         fst dword [curr_x]
-        fild dword [hundred]
-        fcomip
-        jg function.next2
-        fstp dword [junk]
-        fld dword [curr_x]
-        fild dword [hundred]
-        fsubp
-        fstp dword [curr_x]
+      ;  fild dword [hundred]
+      ;  fcomip
+      ;  jg function.next2
+      ;  fstp dword [junk]
+      ;  fld dword [curr_x]
+      ;  fild dword [hundred]
+      ;  fsubp
+      ;  fstp dword [curr_x]
     .next2:
         finit
         fld dword [curr_angle]
@@ -121,18 +135,85 @@ section .text
         fld dword [curr_y]
         faddp
         fst dword [curr_y]
+      ;  fild dword [hundred]
+      ;  fcomip
+      ;  jg function.next3
+      ;  fstp dword [junk]
+      ;  fld dword [curr_y]
+      ;  fild dword [hundred]
+      ;  fsubp
+      ;  fstp dword [curr_y]
+    .next3:
+        
+        jmp function.normal_cord
+        
+    .normal_cord:
+        finit
+        fld dword [curr_x]
         fild dword [hundred]
-        fcomip
-        jg function.next3
-        fstp dword [junk]
+        fcomi
+        ja function.x_not_bigger
+        fld dword [curr_x]
+        fild dword [hundred]
+        fsubp
+        fstp dword [curr_x]
+        jmp function.x_not_smaller
+    .x_not_bigger:
+        finit
+        fild dword [zero]
+        fld dword [curr_x]
+        fcomi
+        ja function.x_not_smaller
+        finit
+        fld dword [curr_x]
+        fild dword [hundred]
+        faddp
+        fstp dword [curr_x]  
+    .x_not_smaller:
+       finit
+        fld dword [curr_y]
+        fild dword [hundred]
+        fcomi
+        ja function.y_not_bigger
         fld dword [curr_y]
         fild dword [hundred]
         fsubp
         fstp dword [curr_y]
-    .next3:
-        
-        jmp function.may_destroy
-        
+        jmp function.y_not_smaller
+    .y_not_bigger:
+        finit
+        fild dword [zero]
+        fld dword [curr_y]
+        fcomi
+        ja function.y_not_smaller
+        finit
+        fld dword [curr_y]
+        fild dword [hundred]
+        faddp
+        fstp dword [curr_y]    
+    .y_not_smaller:
+       finit
+        fld dword [curr_angle]
+        fild dword [three_sisxty]
+        fcomi
+        ja function.angle_not_bigger
+        fld dword [curr_angle]
+        fild dword [three_sisxty]
+        fsubp
+        fstp dword [curr_angle]
+        jmp function.angle_not_smaller
+    .angle_not_bigger:
+        finit
+        fild dword [zero]
+        fld dword [curr_angle]
+        fcomi
+        ja function.angle_not_smaller
+        finit
+        fld dword [curr_angle]
+        fild dword [three_sisxty]
+        faddp
+        fstp dword [curr_angle] 
+    .angle_not_smaller:
 
     .may_destroy:
 
@@ -167,7 +248,7 @@ section .text
         fabs
         fild dword [beta]
         fcomi                       
-        jg function.cant_destroy
+        jb function.cant_destroy
      ;   ffree
         finit
         fld dword [new_x]
@@ -180,7 +261,7 @@ section .text
         fsqrt
         fild dword [max_distance]
         fcomi
-        jg function.cant_destroy    
+        jb function.cant_destroy    
 
     .can_destroy:
         mov eax, dword [targets_dest]
@@ -190,7 +271,7 @@ section .text
         je function.i_am_the_winner
         ;backing up the data to the stack
         mov eax , [curr_drone]              ;getting the curr drone stack
-        mov ebx,  STKSIZE
+        mov ebx,  dword [STKSIZE]
         imul ebx             
         mov ebx , [stacks]
         add ebx, eax                
@@ -213,7 +294,7 @@ section .text
     .cant_destroy:
         ;backing up the data to the stack
         mov eax , [curr_drone]              ;getting the curr drone stack
-        mov ebx,  STKSIZE
+        mov ebx, dword [STKSIZE]
         imul ebx             
         mov ebx , [stacks]
         add ebx, eax                
@@ -235,9 +316,9 @@ section .text
 
     .i_am_the_winner:
         pushad
-        push winning_msg_1
-        push dword [curr_drone]
         push winning_msg_2
+        push dword [curr_drone]
+        push winning_msg_1
         push f_format_winning
         call printf
         add esp, 16

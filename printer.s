@@ -30,9 +30,9 @@ section .text
 printer:
         push ebp              		; save Base Pointer (bp) original value
         mov ebp, esp         		; use Base Pointer to access stack contents (do_Str(...) activation frame)
-        pushad                   	; push all signficant registers onto stack (backup registers values)
+       pushad                   	; push all signficant registers onto stack (backup registers values)
 ;       mov ecx, dword [ebp+8]		; get function argument on stack
-;       pushad
+       pushad
         sub esp , 8
         mov ebx , target_x
         fld dword [ebx]
@@ -49,10 +49,11 @@ printer:
     loop_printer:
         mov edx , dword [iter_drone]
         cmp dword [num_of_drones], edx
+      ; cmp dword[iter_drone], 1
         je finish_print
 
         ; /////// new print
-        mov eax, STKSIZE
+        mov eax, dword [STKSIZE]
         mov edx ,dword [iter_drone]
         mul edx
         add eax, dword [stacks]
@@ -77,7 +78,7 @@ printer:
         push f_float_drone
         call printf
         add esp , 36  ;check how much to add
-        popad
+     ;   popad
         inc dword [iter_drone]
         jmp loop_printer
 

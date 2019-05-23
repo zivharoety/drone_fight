@@ -15,7 +15,10 @@ section .text
 section .data
     drone_steps: dd 0
 
+section .text
 resume:
+    push ebp
+    mov ebp , esp
     .game_loop:
         mov eax, dword [drone_steps_till_print]
         cmp dword [drone_steps], eax                 ;checks if we need to print the board
@@ -25,11 +28,9 @@ resume:
         popad
         mov dword [drone_steps] , 0
     .dont_call_printer:
-        mov eax , [curr_drone]
-        mov ebx , 8
-        mul ebx
-        mov ebx , [CORS+eax]            ;to recheck
+        pushad
         call function
+        popad 
         inc dword [curr_drone]
         inc dword [drone_steps]
         mov edx , [num_of_drones]
@@ -40,4 +41,6 @@ resume:
         mov dword [curr_drone], 0
         jmp resume.game_loop   
 
+    mov esp , ebp
+    pop ebp
     ret

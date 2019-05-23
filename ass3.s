@@ -19,6 +19,7 @@ global    to_print
 global    rand_target
 extern    function
 extern    printer
+extern    resume
 
 
 section .rodata
@@ -27,7 +28,7 @@ section .rodata
     f_float_target: db "%.2f",10 , 0	; format float
 
     err_arguments: db 'Error: Not enough arguments', 0
-    STKSIZE equ 16*1024             ;16 Kb
+    STKSIZE: dd 16384             ;16 Kb
     CODEP equ 0                     ; offset of pointer to co-routine function in co-routine struct
     SPP equ 4                       ; offset of pointer to co-routine stack in co-routine struct 
     alpha_off equ 0
@@ -47,9 +48,9 @@ section .rodata
 section .bss			; we define (global) uninitialized variables in .bss section
     SPT: resd 1         ;temporary stack pointer
     SPMAIN: resd 1      ; stack pointer of main
-    STK_schduler: resb STKSIZE
-    STK_printer: resb STKSIZE
-    STK_target: resb STKSIZE
+    STK_schduler: resb 16384;[STKSIZE]
+    STK_printer: resb 16384;[STKSIZE]
+    STK_target: resb 16384;[STKSIZE]
 
 section .data
     num_of_drones: dd 0
@@ -73,11 +74,11 @@ section .data
    
 
     ;scheduler:  dd schedule                    ;;;;;to recheck!
-                dd STK_schduler+STKSIZE
+            ;    dd STK_schduler+[STKSIZE]
     ;printer:    dd print
-                dd STK_printer+STKSIZE
+          ;      dd STK_printer+[STKSIZE]
     ;target:     dd creat_target
-                dd STK_target+STKSIZE
+          ;      dd STK_target+[STKSIZE]
 
 
 section .text
@@ -168,7 +169,7 @@ main:
 
 
     mov eax , [num_of_drones]       ;allocating an array for the satcks of the drones 
-    mov ebx, STKSIZE
+    mov ebx, dword [STKSIZE]
     mul ebx
     pushad
     push eax
@@ -198,7 +199,7 @@ loop_set_drones_stacks:
     mov edx ,dword [stacks+ecx] 
     mov dword [CORS+ebx] , edx
     add ebx , 8
-    add ecx , STKSIZE
+    add ecx , dword [STKSIZE]
     inc eax
     jmp loop_set_drones_stacks
 end_loop_set:
@@ -222,10 +223,12 @@ loop_random_loc_drone:
     add edx , 4
     mov ebx , dword [new_drone_y]
     mov dword [edx] , ebx
-    sub edx , 8
-    add edx , STKSIZE
+    add edx , 4
+    mov dword[edx], 0
+    sub edx , 12
+    add edx , dword [STKSIZE]
     inc eax
-     mov ecx, edx
+    mov ecx, edx
     jmp loop_random_loc_drone
     
 end_loop_rand_loc:
@@ -241,43 +244,45 @@ mov dword [curr_drone] , 0
 pushad
 call rand_target
 popad
-ziv_debug:
-    pushad
-    call function
-    popad
-    inc dword [curr_drone]
-    pushad
-    call function
-    popad
-    pushad
-    call printer
-    popad
-    jmp ziv_debug
 
-call rand_in_range
-guy_debug:
-    mov edx , dword [rand_angle]
-    mov dword [to_print] , edx
-    pushad
-    call print_top
-    popad
-    jmp end
+pushad
+call resume
+popad
+;ziv_debug:
+;    pushad
+;    call function
+;    popad
+;    
+;    pushad
+;    call printer
+;    popad
+    
+;    jmp ziv_debug
+
+;call rand_in_range
+;guy_debug:
+;    mov edx , dword [rand_angle]
+;    mov dword [to_print] , edx
+;    pushad
+;    call print_top
+;    popad
+;    jmp end
    
 
 
 
 
-print_top:
-    pushad
-    sub esp, 8
-    mov ebx , to_print
-    fld dword [ebx]
-    fstp qword [esp]
-    push f_float_target
-    call printf
-    add esp , 12
-    popad
-    ret 
+;print_top:
+;    pushad
+;    sub esp, 8
+;    mov ebx , to_print
+;    fld dword [ebx]
+;    fstp qword [esp]
+;    push f_float_target
+;    call printf
+;    add esp , 12
+;    popad
+;    ret 
 
 
 
